@@ -3,16 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Octo Training App</title>
+    <title>Octo Training — Idea Generator</title>
     <link rel="stylesheet" href="styles.css" />
+    <script src="app.js"></script>
   </head>
   <body>
-    <div class="container">
-      <h1>My First App</h1>
-      <p>Count: <span id="count">0</span></p>
-      <button id="increment-btn" onclick="increment()">Click Me</button>
-      <button id="reset-btn" onclick="reset()">Reset</button>
-    </div>
-    <script src="app.js"></script>
+    <main class="container">
+      <h1>💡 Idea Generator</h1>
+
+      <section class="input-section">
+        <label for="idea-input">Your idea</label>
+        <div class="input-row">
+          <input
+            id="idea-input"
+            type="text"
+            placeholder="Enter your idea..."
+            maxlength="200"
+            autocomplete="off"
+          />
+          <button id="add-btn">Add Idea</button>
+        </div>
+        <p id="error-msg" class="error" aria-live="polite"></p>
+      </section>
+
+      <section class="ideas-section">
+        <div id="ideas-list" aria-label="Your ideas"></div>
+        <button id="clear-btn">Clear All</button>
+      </section>
+    </main>
   </body>
 </html>
