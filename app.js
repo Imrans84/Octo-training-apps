@@ -1,77 +1,129 @@
-// Day 2: replaced all onclick attributes with addEventListener
-// Compared to Day 1: no global functions called from HTML, DOMContentLoaded wrapper,
-// input validation with error messages, safe rendering via escapeHtml()
+// app.js — DOM wiring only; all data logic lives in tasks.js
+import {
+  addTask,
+  toggleTask,
+  deleteTask,
+  setFilter,
+  getFilter,
+  getFilteredTasks,
+  getStats,
+  clearCompleted,
+} from "./tasks.js";
 
-const ideas = [];
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function renderTasks() {
+  const listEl = document.getElementById("task-list");
+  const emptyEl = document.getElementById("empty-state");
+  const tasks = getFilteredTasks();
+
+  if (tasks.length === 0) {
+    listEl.innerHTML = "";
+    emptyEl.hidden = false;
+  } else {
+    emptyEl.hidden = true;
+    listEl.innerHTML = tasks
+      .map(
+        (task) => `
+        <li class="task-item ${task.completed ? "completed" : ""}" data-id="${task.id}">
+          <input
+            type="checkbox"
+            ${task.completed ? "checked" : ""}
+            aria-label="Mark ${escapeHtml(task.title)} complete"
+            data-action="toggle"
+            data-testid="task-item-toggle"
+          />
+          <span class="task-title">${escapeHtml(task.title)}</span>
+          <button
+            class="task-delete"
+            aria-label="Delete ${escapeHtml(task.title)}"
+            data-action="delete"
+            data-testid="task-item-delete"
+          >✕</button>
+        </li>
+      `,
+      )
+      .join("");
+  }
+
+  updateStats();
+}
+
+function updateStats() {
+  const { total, active, completed } = getStats();
+  const statsEl = document.getElementById("stats");
+  statsEl.textContent = `${total} task${total !== 1 ? "s" : ""} · ${active} active · ${completed} done`;
+}
+
+function updateFilterButtons() {
+  const filter = getFilter();
+  document.querySelectorAll(".filter-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.filter === filter);
+  });
+}
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("add-btn").addEventListener("click", addIdea);
-  document.getElementById("clear-btn").addEventListener("click", clearIdeas);
+  // Initial render
+  renderTasks();
 
-  // Enter key shortcut — users expect this on text inputs
-  document.getElementById("idea-input").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") addIdea();
+  // Add task
+  const form = document.getElementById("add-task-form");
+  const input = document.getElementById("task-input");
+  const errorEl = document.getElementById("form-error");
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    errorEl.textContent = "";
+    try {
+      addTask(input.value);
+      input.value = "";
+      renderTasks();
+    } catch (err) {
+      errorEl.textContent = err.message;
+      input.focus();
+    }
   });
 
-  renderIdeas(); // render empty state on load
+  // Toggle and delete via event delegation
+  const listEl = document.getElementById("task-list");
+  listEl.addEventListener("click", (e) => {
+    const action = e.target.dataset.action;
+    const taskItem = e.target.closest("[data-id]");
+    if (!taskItem) return;
+    const id = Number(taskItem.dataset.id);
+
+    if (action === "toggle") {
+      toggleTask(id);
+      renderTasks();
+    } else if (action === "delete") {
+      deleteTask(id);
+      renderTasks();
+    }
+  });
+
+  // Filter buttons
+  document.querySelector(".filters").addEventListener("click", (e) => {
+    if (!e.target.matches(".filter-btn")) return;
+    setFilter(e.target.dataset.filter);
+    updateFilterButtons();
+    renderTasks();
+  });
+
+  // Clear completed
+  document.getElementById("clear-completed").addEventListener("click", () => {
+    clearCompleted();
+    renderTasks();
+  });
+
+  // Cross-tab sync
+  window.addEventListener("storage", (e) => {
+    if (e.key === "task-manager-v1") renderTasks();
+  });
 });
-
-function addIdea() {
-  const input = document.getElementById("idea-input");
-  const errorMsg = document.getElementById("error-msg");
-  const text = input.value.trim(); // always trim first
-
-  // Validate — show a specific message, don't silently ignore
-  if (!text) {
-    errorMsg.textContent = "Please enter an idea before adding.";
-    input.focus();
-    return;
-  }
-
-  errorMsg.textContent = ""; // clear any previous error
-  ideas.push({ id: Date.now(), text });
-  input.value = "";
-  input.focus(); // re-focus so user can type the next idea immediately
-  renderIdeas();
-}
-
-function clearIdeas() {
-  ideas.length = 0; // mutate in place — same array reference
-  renderIdeas();
-}
-
-function renderIdeas() {
-  const list = document.getElementById("ideas-list");
-
-  if (ideas.length === 0) {
-    list.innerHTML = '<p class="empty">No ideas yet. Add one above!</p>';
-    return;
-  }
-
-  // Build HTML string — escapeHtml() is REQUIRED before injecting user text
-  list.innerHTML = ideas
-    .map(
-      (idea) => `
-      <div class="idea-card">
-        <span>${escapeHtml(idea.text)}</span>
-        <button onclick="removeIdea(${idea.id})" aria-label="Remove idea">✕</button>
-      </div>
-    `,
-    )
-    .join("");
-}
-
-function removeIdea(id) {
-  // findIndex + splice: O(n) but fine for a small list
-  const idx = ideas.findIndex((i) => i.id === id);
-  if (idx !== -1) ideas.splice(idx, 1);
-  renderIdeas();
-}
-
-// Prevents XSS when injecting user text into innerHTML
-// Converts <script> to &lt;script&gt; so it renders as text, not code
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.appendChild(document.createTextNode(text));
-  return div.innerHTML;
-}

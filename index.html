@@ -3,33 +3,96 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Octo Training — Idea Generator</title>
+    <title>Task Manager</title>
+
     <link rel="stylesheet" href="styles.css" />
-    <script src="app.js"></script>
   </head>
+
   <body>
     <main class="container">
-      <h1>💡 Idea Generator</h1>
+      <h1>Task Manager</h1>
 
-      <section class="input-section">
-        <label for="idea-input">Your idea</label>
+      <!-- ADD TASK FORM -->
+      <form id="add-task-form" data-testid="task-manager-form" novalidate>
+        <label for="task-input">New task</label>
+
         <div class="input-row">
           <input
-            id="idea-input"
             type="text"
-            placeholder="Enter your idea..."
-            maxlength="200"
+            id="task-input"
+            name="task"
+            data-testid="task-manager-form-input"
+            placeholder="What needs doing?"
             autocomplete="off"
+            maxlength="200"
+            required
           />
-          <button id="add-btn">Add Idea</button>
-        </div>
-        <p id="error-msg" class="error" aria-live="polite"></p>
-      </section>
 
-      <section class="ideas-section">
-        <div id="ideas-list" aria-label="Your ideas"></div>
-        <button id="clear-btn">Clear All</button>
-      </section>
+          <button type="submit" data-testid="task-manager-form-submit">
+            Add
+          </button>
+        </div>
+
+        <p id="form-error" class="error" role="alert" aria-live="polite"></p>
+      </form>
+
+      <!-- FILTERS -->
+      <nav class="filters" aria-label="Filter tasks">
+        <button
+          type="button"
+          class="filter-btn active"
+          data-filter="all"
+          data-testid="filter-all"
+        >
+          All
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn"
+          data-filter="active"
+          data-testid="filter-active"
+        >
+          Active
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn"
+          data-filter="completed"
+          data-testid="filter-completed"
+        >
+          Completed
+        </button>
+      </nav>
+
+      <!-- STATS -->
+      <p id="stats" class="stats" aria-live="polite"></p>
+
+      <!-- TASK LIST -->
+      <ul
+        id="task-list"
+        data-testid="task-list"
+        aria-label="Task list"
+        aria-live="polite"
+      ></ul>
+
+      <!-- EMPTY STATE -->
+      <div id="empty-state" class="empty-state" hidden>
+        <p>No tasks here. Add one above!</p>
+      </div>
+
+      <!-- CLEAR BUTTON -->
+      <button
+        type="button"
+        id="clear-completed"
+        data-testid="clear-completed"
+        class="secondary"
+      >
+        Clear completed
+      </button>
     </main>
+
+    <script type="module" src="app.js"></script>
   </body>
 </html>
