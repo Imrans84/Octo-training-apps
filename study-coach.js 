@@ -1,0 +1,126 @@
+// study-coach.js
+
+const COACH_STORAGE_KEY = 'ai-study-coach-plan-v1';
+
+function escapeHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+export function parseStudyPlan(raw) {
+  if (!raw || typeof raw !== 'string' || raw.trim() === '') {
+    throw new Error('Please paste a JSON study plan into the text area first.');
+  }
+
+  let data;
+  try {
+    data = JSON.parse(raw.trim());
+  } catch {
+    throw new Error(
+      'The text you pasted is not valid JSON. Generate a new plan and paste only the raw JSON output.'
+    );
+  }
+
+  // Structural validation
+  if (typeof data !== 'object' || Array.isArray(data) || data === null) {
+    throw new Error('Plan must be a JSON object, not an array or primitive.');
+  }
+  if (typeof data.planTitle !== 'string' || data.planTitle.trim() === '') {
+    throw new Error('Plan is missing a valid planTitle string.');
+  }
+  if (!Array.isArray(data.topics)) {
+    throw new Error('Plan must have a topics array.');
+  }
+  if (data.topics.length === 0) {
+    throw new Error('Plan must include at least one topic.');
+  }
+
+  // Per-topic validation
+  data.topics.forEach((topic, index) => {
+    const pos = `Topic ${index + 1}`;
+    if (typeof topic.id !== 'number') throw new Error(`${pos} is missing a numeric id.`);
+    if (typeof topic.title !== 'string' || topic.title.trim() === '') {
+      throw new Error(`${pos} is missing a title.`);
+    }
+    if (typeof topic.durationHours !== 'number' || topic.durationHours <= 0) {
+      throw new Error(`${pos} must have a positive durationHours number.`);
+    }
+    if (!Array.isArray(topic.objectives) || topic.objectives.length === 0) {
+      throw new Error(`${pos} must have at least one objective.`);
+    }
+    if (!Array.isArray(topic.resources)) {
+      throw new Error(`${pos} must have a resources array.`);
+    }
+  });
+
+  return data;
+}
+
+export function renderStudyPlan(plan, containerEl) {
+  if (!containerEl) return;
+
+  const topicsHtml = plan.topics.map(topic => {
+    const objectivesHtml = topic.objectives
+      .map(obj => `<li>${escapeHtml(obj)}</li>`)
+      .join('');
+
+    const resourcesHtml = (topic.resources || [])
+      .map(r => {
+        const safeUrl = encodeURI(r.url || '').startsWith('http')
+          ? escapeHtml(r.url)
+          : '#';
+        return `<li><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.title)}</a></li>`;
+      })
+      .join('');
+
+    const practiceHtml = topic.practicePrompt
+      ? `<p class="practice-prompt"><strong>Practice:</strong> ${escapeHtml(topic.practicePrompt)}</p>`
+      : '';
+
+    return `
+      <article class="topic-card" data-testid="topic-card">
+        <header class="topic-header">
+          <span class="topic-id">Topic ${topic.id}</span>
+          <h3>${escapeHtml(topic.title)}</h3>
+          <span class="duration">${topic.durationHours}h</span>
+        </header>
+        <section aria-label="Objectives">
+          <h4>Learning Objectives</h4>
+          <ul>${objectivesHtml}</ul>
+        </section>
+        ${resourcesHtml ? `<section aria-label="Resources"><h4>Resources</h4><ul>${resourcesHtml}</ul></section>` : ''}
+        ${practiceHtml}
+      </article>
+    `;
+  }).join('');
+
+  containerEl.innerHTML = `
+    <div class="plan-header">
+      <h2>${escapeHtml(plan.planTitle)}</h2>
+      <p>${plan.topics.length} topics · ${plan.totalDays || plan.topics.length} days</p>
+    </div>
+    <div class="topics-grid" data-testid="topics-grid">
+      ${topicsHtml}
+    </div>
+  `;
+}
+
+export function loadStudyPlan(containerEl) {
+  try {
+    const raw = localStorage.getItem(COACH_STORAGE_KEY);
+    if (!raw) return;
+    const plan = parseStudyPlan(raw);
+    renderStudyPlan(plan, containerEl);
+  } catch {
+    // Stored plan is invalid — silently skip; user can paste a new one
+  }
+}
+
+export function saveStudyPlan(plan) {
+  localStorage.setItem(COACH_STORAGE_KEY, JSON.stringify(plan));
+}
