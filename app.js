@@ -127,3 +127,31 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "task-manager-v1") renderTasks();
   });
 });
+const parseBtn = document.getElementById("parse-btn");
+const input = document.getElementById("study-input");
+const output = document.getElementById("study-output");
+const error = document.getElementById("study-error");
+
+parseBtn.addEventListener("click", () => {
+  error.textContent = "";
+  output.innerHTML = "";
+
+  try {
+    const plan = JSON.parse(input.value);
+
+    let html = "";
+
+    plan.days.forEach((day) => {
+      html += `
+                <h3>Day ${day.day}: ${day.topic}</h3>
+                <ul>
+                    ${day.exercises.map((ex) => `<li>${ex}</li>`).join("")}
+                </ul>
+            `;
+    });
+
+    output.innerHTML = html;
+  } catch (err) {
+    error.textContent = "Invalid JSON!";
+  }
+});

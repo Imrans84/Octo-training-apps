@@ -4,60 +4,46 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Task Manager</title>
-
     <link rel="stylesheet" href="styles.css" />
   </head>
-
   <body>
     <main class="container">
       <h1>Task Manager</h1>
 
-      <!-- ADD TASK FORM -->
-      <form id="add-task-form" data-testid="task-manager-form" novalidate>
+<form id="add-task-form" data-testid="task-manager-form" novalidate>
         <label for="task-input">New task</label>
-
         <div class="input-row">
           <input
             type="text"
             id="task-input"
-            name="task"
             data-testid="task-manager-form-input"
             placeholder="What needs doing?"
             autocomplete="off"
             maxlength="200"
-            required
           />
-
           <button type="submit" data-testid="task-manager-form-submit">
             Add
           </button>
         </div>
-
         <p id="form-error" class="error" role="alert" aria-live="polite"></p>
       </form>
 
-      <!-- FILTERS -->
       <nav class="filters" aria-label="Filter tasks">
         <button
-          type="button"
           class="filter-btn active"
           data-filter="all"
           data-testid="filter-all"
         >
           All
         </button>
-
         <button
-          type="button"
           class="filter-btn"
           data-filter="active"
           data-testid="filter-active"
         >
           Active
         </button>
-
         <button
-          type="button"
           class="filter-btn"
           data-filter="completed"
           data-testid="filter-completed"
@@ -66,10 +52,8 @@
         </button>
       </nav>
 
-      <!-- STATS -->
       <p id="stats" class="stats" aria-live="polite"></p>
 
-      <!-- TASK LIST -->
       <ul
         id="task-list"
         data-testid="task-list"
@@ -77,14 +61,11 @@
         aria-live="polite"
       ></ul>
 
-      <!-- EMPTY STATE -->
       <div id="empty-state" class="empty-state" hidden>
-        <p>No tasks here. Add one above!</p>
+        <p><title>Task Manager</title></p>
       </div>
 
-      <!-- CLEAR BUTTON -->
       <button
-        type="button"
         id="clear-completed"
         data-testid="clear-completed"
         class="secondary"
@@ -95,4 +76,30 @@
 
     <script type="module" src="app.js"></script>
   </body>
+  <html lang="en">
+    <body>
+      <div class="container">
+        <hr />
+
+        <h2>AI Study Coach</h2>
+
+        <textarea
+          id="study-input"
+          placeholder="Paste AI JSON here..."
+          rows="6"
+          style="width: 100%"
+        ></textarea>
+
+        <br /><br />
+
+        <button id="parse-btn">Parse Plan</button>
+
+        <p id="study-error" style="color: red"></p>
+
+        <div id="study-output"></div>
+      </div>
+
+      <script src="app.js"></script>
+    </body>
+  </html>
 </html>
