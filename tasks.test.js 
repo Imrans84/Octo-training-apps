@@ -1,0 +1,185 @@
+// tasks.test.js
+import { describe, it, expect, beforeEach } from 'vitest';
+import {
+  loadTasks,
+  saveTasks,
+  addTask,
+  toggleTask,
+  deleteTask,
+  setFilter,
+  getFilter,
+  getFilteredTasks,
+  getStats,
+  clearCompleted,
+  STORAGE_KEY,
+} from './tasks.js';
+
+beforeEach(() => {
+  localStorage.clear();
+});
+
+describe('loadTasks', () => {
+  it('returns an empty array when localStorage is empty', () => {
+    expect(loadTasks()).toEqual([]);
+  });
+
+  it('returns stored tasks after saveTasks', () => {
+    const tasks = [{ id: 1, title: 'Test', completed: false, createdAt: '2024-01-01' }];
+    saveTasks(tasks);
+    expect(loadTasks()).toEqual(tasks);
+  });
+
+  it('returns an empty array when stored data is corrupt JSON', () => {
+    localStorage.setItem(STORAGE_KEY, 'not valid json {{{{');
+    expect(loadTasks()).toEqual([]);
+  });
+});
+
+describe('addTask', () => {
+  it('adds a task and returns the updated array', () => {
+    const result = addTask('Buy coffee');
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe('Buy coffee');
+    expect(result[0].completed).toBe(false);
+    expect(typeof result[0].id).toBe('number');
+  });
+
+  it('persists the added task to localStorage', () => {
+    addTask('Buy coffee');
+    const stored = loadTasks();
+    expect(stored).toHaveLength(1);
+    expect(stored[0].title).toBe('Buy coffee');
+  });
+
+  it('throws when title is blank', () => {
+    expect(() => addTask('')).toThrow('Task title cannot be blank');
+  });
+
+  it('throws when title is only whitespace', () => {
+    expect(() => addTask('   ')).toThrow('Task title cannot be blank');
+  });
+
+  it('throws when title exceeds 200 characters', () => {
+    expect(() => addTask('a'.repeat(201))).toThrow('200 characters or fewer');
+  });
+
+  it('trims whitespace from the title before saving', () => {
+    const result = addTask('  Write tests  ');
+    expect(result[0].title).toBe('Write tests');
+  });
+});
+
+describe('toggleTask', () => {
+  it('toggles a task from incomplete to complete', () => {
+    addTask('Read docs');
+    const tasks = loadTasks();
+    const id = tasks[0].id;
+    const result = toggleTask(id);
+    expect(result[0].completed).toBe(true);
+  });
+
+  it('toggles a task from complete back to incomplete', () => {
+    addTask('Read docs');
+    const id = loadTasks()[0].id;
+    toggleTask(id);
+    const result = toggleTask(id);
+    expect(result[0].completed).toBe(false);
+  });
+
+  it('does not mutate other tasks when toggling', () => {
+    addTask('Task A');
+    addTask('Task B');
+    const [a, b] = loadTasks();
+    toggleTask(a.id);
+    const updated = loadTasks();
+    expect(updated.find(t => t.id === b.id).completed).toBe(false);
+  });
+});
+
+describe('deleteTask', () => {
+  it('removes the task with the given id', () => {
+    addTask('To delete');
+    const id = loadTasks()[0].id;
+    const result = deleteTask(id);
+    expect(result).toHaveLength(0);
+  });
+
+  it('keeps other tasks when deleting one', () => {
+    addTask('Keep me');
+    addTask('Delete me');
+    const [keep, del] = loadTasks();
+    deleteTask(del.id);
+    const remaining = loadTasks();
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].id).toBe(keep.id);
+  });
+});
+
+describe('filter and getFilteredTasks', () => {
+  beforeEach(() => {
+    addTask('Active task');
+    addTask('Done task');
+    const id = loadTasks()[1].id;
+    toggleTask(id);
+    setFilter('all');
+  });
+
+  it('returns all tasks when filter is all', () => {
+    setFilter('all');
+    expect(getFilteredTasks()).toHaveLength(2);
+  });
+
+  it('returns only incomplete tasks when filter is active', () => {
+    setFilter('active');
+    const result = getFilteredTasks();
+    expect(result).toHaveLength(1);
+    expect(result[0].completed).toBe(false);
+  });
+
+  it('returns only complete tasks when filter is completed', () => {
+    setFilter('completed');
+    const result = getFilteredTasks();
+    expect(result).toHaveLength(1);
+    expect(result[0].completed).toBe(true);
+  });
+
+  it('throws when an unknown filter is set', () => {
+    expect(() => setFilter('unknown')).toThrow('Unknown filter');
+  });
+});
+
+describe('getStats', () => {
+  it('returns zero counts for an empty task list', () => {
+    const stats = getStats();
+    expect(stats).toEqual({ total: 0, active: 0, completed: 0 });
+  });
+
+  it('returns correct counts after adding and toggling tasks', () => {
+    addTask('A');
+    addTask('B');
+    addTask('C');
+    const id = loadTasks()[0].id;
+    toggleTask(id);
+    const stats = getStats();
+    expect(stats).toEqual({ total: 3, active: 2, completed: 1 });
+  });
+});
+
+describe('clearCompleted', () => {
+  it('removes all completed tasks and keeps active ones', () => {
+    addTask('Active');
+    addTask('Done');
+    const id = loadTasks()[1].id;
+    toggleTask(id);
+    const result = clearCompleted();
+    expect(result).toHaveLength(1);
+    expect(result[0].completed).toBe(false);
+  });
+
+  it('returns the full list unchanged when there are no completed tasks', () => {
+    addTask('A');
+    addTask('B');
+    const result = clearCompleted();
+    expect(result).toHaveLength(2);
+  });
+});
