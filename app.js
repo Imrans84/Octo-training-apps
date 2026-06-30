@@ -1,3 +1,7 @@
+if (localStorage.getItem("loggedIn") !== "true") {
+  window.location.href = "login.html";
+}
+
 // app.js — DOM wiring only; all data logic lives in tasks.js
 import {
   addTask,
@@ -59,50 +63,58 @@ function renderTasks() {
 function updateStats() {
   const { total, active, completed } = getStats();
   const statsEl = document.getElementById("stats");
+
   statsEl.textContent = `${total} task${total !== 1 ? "s" : ""} · ${active} active · ${completed} done`;
 }
 
 function updateFilterButtons() {
   const filter = getFilter();
+
   document.querySelectorAll(".filter-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.filter === filter);
   });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Initial render
   renderTasks();
+  updateFilterButtons();
 
   // Add task
   const form = document.getElementById("add-task-form");
-  const input = document.getElementById("task-input");
+  const taskInput = document.getElementById("task-input");
   const errorEl = document.getElementById("form-error");
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     errorEl.textContent = "";
+
     try {
-      addTask(input.value);
-      input.value = "";
+      addTask(taskInput.value);
+      taskInput.value = "";
       renderTasks();
     } catch (err) {
       errorEl.textContent = err.message;
-      input.focus();
+      taskInput.focus();
     }
   });
 
-  // Toggle and delete via event delegation
+  // Toggle and delete task
   const listEl = document.getElementById("task-list");
+
   listEl.addEventListener("click", (e) => {
     const action = e.target.dataset.action;
     const taskItem = e.target.closest("[data-id]");
+
     if (!taskItem) return;
+
     const id = Number(taskItem.dataset.id);
 
     if (action === "toggle") {
       toggleTask(id);
       renderTasks();
-    } else if (action === "delete") {
+    }
+
+    if (action === "delete") {
       deleteTask(id);
       renderTasks();
     }
@@ -111,6 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Filter buttons
   document.querySelector(".filters").addEventListener("click", (e) => {
     if (!e.target.matches(".filter-btn")) return;
+
     setFilter(e.target.dataset.filter);
     updateFilterButtons();
     renderTasks();
@@ -122,36 +135,40 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTasks();
   });
 
+  // AI Study Coach
+  const parseBtn = document.getElementById("parse-btn");
+  const studyInput = document.getElementById("study-input");
+  const output = document.getElementById("study-output");
+  const studyError = document.getElementById("study-error");
+
+  parseBtn.addEventListener("click", () => {
+    studyError.textContent = "";
+    output.innerHTML = "";
+
+    try {
+      const plan = JSON.parse(studyInput.value);
+
+      let html = "";
+
+      plan.days.forEach((day) => {
+        html += `
+          <h3>Day ${day.day}: ${day.topic}</h3>
+          <ul>
+            ${day.exercises.map((ex) => `<li>${escapeHtml(ex)}</li>`).join("")}
+          </ul>
+        `;
+      });
+
+      output.innerHTML = html;
+    } catch (err) {
+      studyError.textContent = "Invalid JSON!";
+    }
+  });
+
   // Cross-tab sync
   window.addEventListener("storage", (e) => {
-    if (e.key === "task-manager-v1") renderTasks();
+    if (e.key === "task-manager-v1") {
+      renderTasks();
+    }
   });
-});
-const parseBtn = document.getElementById("parse-btn");
-const input = document.getElementById("study-input");
-const output = document.getElementById("study-output");
-const error = document.getElementById("study-error");
-
-parseBtn.addEventListener("click", () => {
-  error.textContent = "";
-  output.innerHTML = "";
-
-  try {
-    const plan = JSON.parse(input.value);
-
-    let html = "";
-
-    plan.days.forEach((day) => {
-      html += `
-                <h3>Day ${day.day}: ${day.topic}</h3>
-                <ul>
-                    ${day.exercises.map((ex) => `<li>${ex}</li>`).join("")}
-                </ul>
-            `;
-    });
-
-    output.innerHTML = html;
-  } catch (err) {
-    error.textContent = "Invalid JSON!";
-  }
 });

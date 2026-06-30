@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager Login</title>
+
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body class="welcome-page">
+    <!-- Header -->
+    <header class="top-header">
+      <h1>Task Manager</h1>
+      <p>Day 9 - Authentication, Roles & Routing</p>
+    </header>
+
+    <!-- Login Card -->
+    <main class="login-container">
+      <h2>Login</h2>
+
+      <div class="login-form">
+        <label for="username"> Username </label>
+
+        <input type="text" id="username" placeholder="Enter username" />
+
+        <label for="password"> Password </label>
+
+        <input type="password" id="password" placeholder="Enter password" />
+
+        <button id="login-btn">Login</button>
+
+        <p id="login-error" class="error"></p>
+
+        <hr />
+
+        <h3>Demo Account</h3>
+
+        <div class="demo-account">
+          <p>
+            Username:
+            <strong>sumaira</strong>
+          </p>
+
+          <p>
+            Password:
+            <strong>student123</strong>
+          </p>
+
+          <p>
+            Role:
+            <strong>student</strong>
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>AI Development Training by Octo Apps</p>
+      <p>Day 9</p>
+      <p>Authentication • Authorization • Routing</p>
+    </footer>
+
+    <script src="login.js"></script>
+  </body>
+</html>
