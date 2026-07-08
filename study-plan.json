@@ -1,0 +1,14 @@
+{
+  "days": [
+    {
+      "day": 1,
+      "topic": "JavaScript Basics",
+      "exercises": ["Variables", "Functions", "Arrays"]
+    },
+    {
+      "day": 2,
+      "topic": "Objects",
+      "exercises": ["Objects", "Loops", "Methods"]
+    }
+  ]
+}

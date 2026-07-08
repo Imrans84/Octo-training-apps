@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Welcome</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body class="welcome-page">
+    <header class="top-header">
+      <h1>Task Manager</h1>
+      <p>Day 9 - Authentication, Roles & Routing</p>
+    </header>
+
+    <nav class="navbar">
+      <button type="button" onclick="showSection('tasks')">Tasks</button>
+      <button type="button" onclick="showSection('search')">Search</button>
+      <button type="button" onclick="showSection('profile')">Profile</button>
+      <button type="button" onclick="showSection('admin')">Admin</button>
+      <button type="button" id="logout-btn">Logout</button>
+    </nav>
+
+    <main class="welcome-card">
+      <h2>Welcome <span id="user-name">Sumaira</span></h2>
+
+      <p class="role-line">Role : <strong id="user-role">student</strong></p>
+
+      <section id="tasks" class="dashboard-box">
+        <h2>Task Manager</h2>
+        <p>Welcome to your task dashboard.</p>
+
+        <div class="task-box-list">
+          <p>✓ Complete HTML Assignment</p>
+          <p>✓ Learn JavaScript</p>
+          <p>✓ Practice CSS</p>
+        </div>
+
+        <button type="button" onclick="window.location.href = 'index.html'">
+          Open Full Task Manager
+        </button>
+      </section>
+
+      <section id="search" class="dashboard-box hidden">
+        <h2>Search</h2>
+        <p>This is the search page.</p>
+      </section>
+
+      <section id="profile" class="dashboard-box hidden">
+        <h2>Profile</h2>
+        <p>Name: Sumaira</p>
+        <p>Role: student</p>
+      </section>
+
+      <section id="admin" class="dashboard-box hidden">
+        <h2>Admin</h2>
+        <p>Only admin/instructor tools can go here.</p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>AI Development Training by Octo Apps</p>
+      <p>Day 9</p>
+      <p>Authentication • Authorization • Routing</p>
+    </footer>
+
+    <script src="welcome.js"></script>
+  </body>
+</html>
