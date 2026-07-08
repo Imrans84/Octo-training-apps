@@ -14,8 +14,14 @@ import {
   clearCompleted,
 } from "./tasks.js";
 
+import {
+  initFilterKeyboardNav,
+  moveFocusAfterDelete,
+  announceToScreenReader,
+} from "./keyboard-nav.js";
+
 function escapeHtml(str) {
-  return str
+  return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -33,26 +39,31 @@ function renderTasks() {
     emptyEl.hidden = false;
   } else {
     emptyEl.hidden = true;
+
     listEl.innerHTML = tasks
       .map(
         (task) => `
-        <li class="task-item ${task.completed ? "completed" : ""}" data-id="${task.id}">
-          <input
-            type="checkbox"
-            ${task.completed ? "checked" : ""}
-            aria-label="Mark ${escapeHtml(task.title)} complete"
-            data-action="toggle"
-            data-testid="task-item-toggle"
-          />
-          <span class="task-title">${escapeHtml(task.title)}</span>
-          <button
-            class="task-delete"
-            aria-label="Delete ${escapeHtml(task.title)}"
-            data-action="delete"
-            data-testid="task-item-delete"
-          >✕</button>
-        </li>
-      `,
+          <li class="task-item ${task.completed ? "completed" : ""}" data-id="${task.id}">
+            <input
+              type="checkbox"
+              ${task.completed ? "checked" : ""}
+              aria-label="Mark ${escapeHtml(task.title)} complete"
+              data-action="toggle"
+              data-testid="task-item-toggle"
+            />
+
+            <span class="task-title">${escapeHtml(task.title)}</span>
+
+            <button
+              class="task-delete"
+              aria-label="Delete ${escapeHtml(task.title)}"
+              data-action="delete"
+              data-testid="task-item-delete"
+            >
+              ✕
+            </button>
+          </li>
+        `,
       )
       .join("");
   }
@@ -79,7 +90,10 @@ document.addEventListener("DOMContentLoaded", () => {
   renderTasks();
   updateFilterButtons();
 
-  // Add task
+  const keyboardNav = initFilterKeyboardNav() || {
+    resetTabindex: () => {},
+  };
+
   const form = document.getElementById("add-task-form");
   const taskInput = document.getElementById("task-input");
   const errorEl = document.getElementById("form-error");
@@ -92,13 +106,13 @@ document.addEventListener("DOMContentLoaded", () => {
       addTask(taskInput.value);
       taskInput.value = "";
       renderTasks();
+      announceToScreenReader("Task added");
     } catch (err) {
       errorEl.textContent = err.message;
       taskInput.focus();
     }
   });
 
-  // Toggle and delete task
   const listEl = document.getElementById("task-list");
 
   listEl.addEventListener("click", (e) => {
@@ -112,60 +126,69 @@ document.addEventListener("DOMContentLoaded", () => {
     if (action === "toggle") {
       toggleTask(id);
       renderTasks();
+      announceToScreenReader("Task updated");
     }
 
     if (action === "delete") {
       deleteTask(id);
       renderTasks();
+      moveFocusAfterDelete(id);
+      announceToScreenReader("Task deleted");
     }
   });
 
-  // Filter buttons
   document.querySelector(".filters").addEventListener("click", (e) => {
     if (!e.target.matches(".filter-btn")) return;
 
     setFilter(e.target.dataset.filter);
     updateFilterButtons();
+    keyboardNav.resetTabindex();
     renderTasks();
+
+    announceToScreenReader(`Showing ${e.target.dataset.filter} tasks`);
   });
 
-  // Clear completed
   document.getElementById("clear-completed").addEventListener("click", () => {
     clearCompleted();
     renderTasks();
+    announceToScreenReader("Completed tasks cleared");
   });
 
-  // AI Study Coach
   const parseBtn = document.getElementById("parse-btn");
   const studyInput = document.getElementById("study-input");
   const output = document.getElementById("study-output");
   const studyError = document.getElementById("study-error");
 
-  parseBtn.addEventListener("click", () => {
-    studyError.textContent = "";
-    output.innerHTML = "";
+  if (parseBtn) {
+    parseBtn.addEventListener("click", () => {
+      studyError.textContent = "";
+      output.innerHTML = "";
 
-    try {
-      const plan = JSON.parse(studyInput.value);
+      try {
+        const plan = JSON.parse(studyInput.value);
 
-      let html = "";
+        let html = "";
 
-      plan.days.forEach((day) => {
-        html += `
-          <h3>Day ${day.day}: ${day.topic}</h3>
-          <ul>
-            ${day.exercises.map((ex) => `<li>${escapeHtml(ex)}</li>`).join("")}
-          </ul>
-        `;
-      });
+        plan.days.forEach((day) => {
+          html += `
+            <h3>Day ${escapeHtml(day.day)}: ${escapeHtml(day.topic)}</h3>
+            <ul>
+              ${day.exercises
+                .map((ex) => `<li>${escapeHtml(ex)}</li>`)
+                .join("")}
+            </ul>
+          `;
+        });
 
-      output.innerHTML = html;
-    } catch (err) {
-      studyError.textContent = "Invalid JSON!";
-    }
-  });
+        output.innerHTML = html;
+        announceToScreenReader("Study plan parsed");
+      } catch (err) {
+        studyError.textContent = "Invalid JSON!";
+        announceToScreenReader("Invalid JSON");
+      }
+    });
+  }
 
-  // Cross-tab sync
   window.addEventListener("storage", (e) => {
     if (e.key === "task-manager-v1") {
       renderTasks();

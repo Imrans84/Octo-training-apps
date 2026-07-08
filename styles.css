@@ -233,3 +233,10 @@ textarea {
 .footer p {
   margin: 5px 0;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  left: -9999px;
+}

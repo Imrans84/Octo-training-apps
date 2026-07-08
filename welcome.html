@@ -13,10 +13,10 @@
     </header>
 
     <nav class="navbar">
-      <button onclick="showSection('tasks')">Tasks</button>
-      <button onclick="showSection('search')">Search</button>
-      <button onclick="showSection('profile')">Profile</button>
-      <button onclick="showSection('admin')">Admin</button>
+      <button type="button" onclick="showSection('tasks')">Tasks</button>
+      <button type="button" onclick="showSection('search')">Search</button>
+      <button type="button" onclick="showSection('profile')">Profile</button>
+      <button type="button" onclick="showSection('admin')">Admin</button>
       <button type="button" id="logout-btn">Logout</button>
     </nav>
 
@@ -27,7 +27,6 @@
 
       <section id="tasks" class="dashboard-box">
         <h2>Task Manager</h2>
-
         <p>Welcome to your task dashboard.</p>
 
         <div class="task-box-list">
@@ -36,7 +35,7 @@
           <p>✓ Practice CSS</p>
         </div>
 
-        <button onclick="window.location.href = 'index.html'">
+        <button type="button" onclick="window.location.href = 'index.html'">
           Open Full Task Manager
         </button>
       </section>
