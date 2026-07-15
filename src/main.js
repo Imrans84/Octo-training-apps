@@ -15,8 +15,12 @@ import {
   getStats,
 } from "./services/task-service.js";
 
+// Book search services
+import { searchBooks } from "./services/book-search-service.js";
+
 // Component rendering
 import { renderTaskItem } from "./components/task-item.js";
+import { renderSearchResults } from "./components/search-results.js";
 
 // Utilities
 import storage from "./utils/storage.js";
@@ -32,6 +36,13 @@ import {
 // Application state
 let tasks = [];
 let currentFilter = "all";
+
+let searchState = {
+  status: "idle",
+  results: [],
+  error: null,
+  query: "",
+};
 
 /**
  * Convert older saved tasks into the new Day 7 task shape.
@@ -49,6 +60,21 @@ function normalizeTasks(savedTasks) {
     priority: task.priority ?? "medium",
     createdAt: task.createdAt ?? new Date().toISOString(),
   }));
+}
+
+/**
+ * Return a debounced version of a function.
+ */
+function debounce(fn, delay) {
+  let timer;
+
+  return function (...args) {
+    clearTimeout(timer);
+
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+    }, delay);
+  };
 }
 
 /**
@@ -110,6 +136,87 @@ function renderTasks() {
 
   updateStats();
   updateFilterButtons();
+}
+
+/**
+ * Update and render the book-search state.
+ */
+function updateSearchState(partialState) {
+  const resultsContainer = document.querySelector(
+    '[data-testid="search-results"]',
+  );
+
+  if (!resultsContainer) {
+    return;
+  }
+
+  searchState = {
+    ...searchState,
+    ...partialState,
+  };
+
+  resultsContainer.innerHTML = renderSearchResults(searchState);
+}
+
+/**
+ * Search Open Library.
+ */
+async function handleBookSearch(query) {
+  const trimmedQuery = query.trim();
+
+  if (trimmedQuery.length < 2) {
+    updateSearchState({
+      status: "idle",
+      query: trimmedQuery,
+      results: [],
+      error: null,
+    });
+
+    return;
+  }
+
+  updateSearchState({
+    status: "loading",
+    query: trimmedQuery,
+    error: null,
+  });
+
+  try {
+    const results = await searchBooks(trimmedQuery, 10);
+
+    updateSearchState({
+      status: "success",
+      results,
+      error: null,
+    });
+  } catch (error) {
+    console.error("[main] Book search failed:", error);
+
+    updateSearchState({
+      status: "error",
+      error,
+      results: [],
+    });
+  }
+}
+
+/**
+ * Add a searched book as a task.
+ */
+function handleBookImport(title) {
+  try {
+    const newTask = createTask(`Read: ${title}`, "medium");
+
+    tasks = [...tasks, newTask];
+
+    saveCurrentTasks();
+    renderTasks();
+
+    announceToScreenReader(`${title} added as a task`);
+  } catch (error) {
+    console.error("[main] Could not import book:", error);
+    announceToScreenReader("Could not add book as a task", "assertive");
+  }
 }
 
 /**
@@ -274,9 +381,7 @@ function handleParseStudyPlan() {
 document.addEventListener("DOMContentLoaded", () => {
   tasks = normalizeTasks(storage.get());
 
-  // Save normalized old tasks in the new format.
   saveCurrentTasks();
-
   renderTasks();
 
   const keyboardNavigation = initFilterKeyboardNav() || {
@@ -289,6 +394,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearCompletedButton = document.getElementById("clear-completed");
   const parseButton = document.getElementById("parse-btn");
 
+  const searchInput = document.querySelector('[data-testid="search-input"]');
+
+  const resultsContainer = document.querySelector(
+    '[data-testid="search-results"]',
+  );
+
   form?.addEventListener("submit", handleSubmit);
 
   taskList?.addEventListener("click", handleTaskListClick);
@@ -300,6 +411,50 @@ document.addEventListener("DOMContentLoaded", () => {
   clearCompletedButton?.addEventListener("click", handleClearCompleted);
 
   parseButton?.addEventListener("click", handleParseStudyPlan);
+
+  if (searchInput && resultsContainer) {
+    const debouncedSearch = debounce((event) => {
+      handleBookSearch(event.target.value);
+    }, 400);
+
+    searchInput.addEventListener("input", debouncedSearch);
+
+    resultsContainer.addEventListener("click", (event) => {
+      const retryButton = event.target.closest(
+        '[data-testid="search-retry-btn"]',
+      );
+
+      if (retryButton) {
+        handleBookSearch(searchState.query);
+        return;
+      }
+
+      const importButton = event.target.closest(
+        '[data-testid^="book-import-"]',
+      );
+
+      if (!importButton) {
+        return;
+      }
+
+      const title = importButton.getAttribute("data-book-title");
+
+      if (title) {
+        handleBookImport(title);
+      }
+    });
+
+    updateSearchState({
+      status: "idle",
+      results: [],
+      error: null,
+      query: "",
+    });
+  } else {
+    console.warn(
+      "[main] Search elements not found in DOM — skipping search setup",
+    );
+  }
 
   // Update the page if another browser tab changes tasks.
   window.addEventListener("storage", (event) => {

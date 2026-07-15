@@ -22,6 +22,7 @@
             placeholder="What needs doing?"
             autocomplete="off"
             maxlength="200"
+            aria-describedby="form-error"
           />
 
           <button type="submit" data-testid="task-manager-form-submit">
@@ -29,11 +30,12 @@
           </button>
         </div>
 
-        <p id="form-error" class="error" role="alert" aria-live="polite"></p>
+        <p id="form-error" class="error" role="alert" aria-live="assertive"></p>
       </form>
 
       <nav class="filters" aria-label="Filter tasks">
         <button
+          type="button"
           class="filter-btn active"
           data-filter="all"
           data-testid="filter-all"
@@ -42,6 +44,7 @@
         </button>
 
         <button
+          type="button"
           class="filter-btn"
           data-filter="active"
           data-testid="filter-active"
@@ -50,6 +53,7 @@
         </button>
 
         <button
+          type="button"
           class="filter-btn"
           data-filter="completed"
           data-testid="filter-completed"
@@ -72,6 +76,7 @@
       </div>
 
       <button
+        type="button"
         id="clear-completed"
         data-testid="clear-completed"
         class="secondary"
@@ -80,30 +85,59 @@
       </button>
     </main>
 
-    <section class="container study-section">
+    <section
+      class="container book-search-section"
+      aria-labelledby="book-search-title"
+    >
+      <h2 id="book-search-title">Search Books</h2>
+
+      <label for="book-search-input">Search by title, author, or subject</label>
+
+      <input
+        type="search"
+        id="book-search-input"
+        data-testid="search-input"
+        placeholder="Example: JavaScript"
+        autocomplete="off"
+      />
+
+      <div
+        class="search-results"
+        data-testid="search-results"
+        aria-live="polite"
+      ></div>
+    </section>
+
+    <section
+      class="container study-section"
+      aria-labelledby="study-coach-title"
+    >
       <hr />
 
-      <h2>AI Study Coach</h2>
+      <h2 id="study-coach-title">AI Study Coach</h2>
+
+      <label for="study-input">Study-plan JSON</label>
 
       <textarea
         id="study-input"
         placeholder="Paste AI JSON here..."
         rows="6"
+        aria-describedby="study-error"
       ></textarea>
 
       <br /><br />
 
-      <button id="parse-btn">Parse Plan</button>
+      <button type="button" id="parse-btn">Parse Plan</button>
 
-      <p id="study-error" class="error"></p>
+      <p id="study-error" class="error" role="alert" aria-live="assertive"></p>
 
       <div id="study-output"></div>
     </section>
 
     <footer class="footer">
       <p>AI Development Training by Octo Apps</p>
-      <p>Day 9</p>
-      <p>Authentication • Authorization • Routing</p>
+      <p>Day 8</p>
+      <p>HTTP • APIs • Async/Await • Error Handling</p>
     </footer>
 
     <script type="module" src="src/main.js"></script>
